@@ -31,6 +31,10 @@ type ReplayedMarker struct {
 
 func GetMostReplayedSegment([]ReplayedMarker)
 
+func upper_bound_Impl(nums []int, value int, startIdx, endInd uint32, comp func(int, int) bool) uint32
+
+func upper_bound(nums []int, value int, comp func(int, int) bool) uint32
+
 func main() {
 	const youtubeDataApi3Url string = "https://yt.lemnoslife.com/videos?part=mostReplayed&id="
 
@@ -97,3 +101,28 @@ func GetMostReplayedSegment([]ReplayedMarker, duration ulong) (point1 *ReplayedM
 	// binary search for point1 and point2
 }
 
+func upper_bound(nums []int, value int, comp func(int, int) bool) uint32 {
+	return upper_bound_Impl(nums, value, uint32(0), uint32(len(nums)), comp)
+}
+
+func upper_bound_Impl(nums []int, value int, startIdx, endInd uint32, comp func(int, int) bool) uint32 {
+	var step uint32 = 0
+	var count uint32 = uint32(len(nums))
+	var it uint32 = 0
+
+	for count > 0 {
+		it = startIdx
+		step = count / 2
+		it += step
+
+		if !comp(value, nums[it]) {
+			it = it + 1
+			startIdx = it
+			count -= step + 1
+		} else {
+			count = step
+		}
+	}
+
+	return it
+}
