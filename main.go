@@ -3,11 +3,13 @@ package main
 // https://yt.lemnoslife.com/videos?part=mostReplayed&id=XiCrniLQGYc
 
 import (
-	// "fmt"
+	"fmt"
 	"net/http"
 	"encoding/json"
-	"os"
+	// "strings"
+	_ "os"
 	"io"
+	"errors"
 )
 
 // set go json Unmarshal function
@@ -25,80 +27,124 @@ type VideoResourceStruct struct {
 }
 
 type ReplayedMarker struct {
-	startMillis ulong
+	startMillis uint64
 	intensityScoreNormalized float32
 }
 
-func GetMostReplayedSegment([]ReplayedMarker)
+/**
+ * comp must return true if lhs is less than rhs 
+ * clamp similar to c++ clamp but returns -1 if left else positive is right
+ * */
+func BinarySearchOrNearest(markersList []ReplayedMarker, target ReplayedMarker, startIdx, endIdx int, comp (func(ReplayedMarker, ReplayedMarker) bool), 
+	clamp (func (ReplayedMarker, ReplayedMarker, ReplayedMarker)int)) int {
+	var midIdx int 
+	for startIdx < endIdx {
+		midIdx = (startIdx + endIdx) / 2
 
-func upper_bound_Impl(nums []int, value int, startIdx, endInd uint32, comp func(int, int) bool) uint32
+		if !comp(markersList[midIdx], target) && !comp(target, markersList[midIdx]) {
+			return midIdx
+		}
 
-func upper_bound(nums []int, value int, comp func(int, int) bool) uint32
+		if comp(target, markersList[midIdx]) {
+			endIdx = midIdx - 1
+		} else {
+			startIdx = midIdx + 1
+		}
+	}
+
+	// find minimum value
+
+	whatIdx := clamp(markersList[startIdx - 1], target, markersList[startIdx])
+
+	if whatIdx < 0 {
+		return startIdx - 1
+	}
+
+	return startIdx // always index of greater value
+}
+
+// func GetMostReplayedSegment(markersList []ReplayedMarker, duration uint64) (int, int, error) {
+// 	if len(markersList) == 0 {
+// 		return -1, -1, errors.New("Empty list")
+// 	}
+
+// 	var mostReplayedValue float32 = 0
+// 	var mostReplayedIdx   int = 0
+
+// 	// find max intensity in the markers list
+// 	for i := 0; i < len(markersList); i++ {
+// 		if markersList[i].intensityScoreNormalized > mostReplayedValue {
+// 			mostReplayedValue = markersList[i]
+// 			mostReplayedIdx = i
+// 		}
+// 	}
+
+// 	// check out-of-range 
+// 	if markersList[mostReplayedIdx] + duration / 2 > markersList[len(markersList) - 1] ||
+// 		markersList[mostReplayedIdx] - duration / 2 < 0 {
+// 			return -1, -1, errors.New("Too much duration")
+// 	}
+
+// 	var point1Value uint64 = markersList[mostReplayedIdx] - duration / 2;
+// 	var point2Value uint64 = markersList[mostReplayedIdx] + duration / 2;
+// }
+
+func GetYoutubeVideoId() string{
+	return string("XiCrniLQGYc")
+}
+
+func PanicIfError(err error) {
+	if (err != nil) {
+		fmt.Println("Error:", err)
+		panic("")			
+	}
+}
 
 func main() {
+
 	const youtubeDataApi3Url string = "https://yt.lemnoslife.com/videos?part=mostReplayed&id="
 
-	// get video id
-	var targetVideoId string = "XiCrniLQGYc"
+	var targetVideoId string = GetYoutubeVideoId()
 
 	var targetYoutubeDataApi3Url string = youtubeDataApi3Url + targetVideoId
 
 	resp, getRequestErr := http.Get(targetYoutubeDataApi3Url)
-
-	if getRequestErr != nil {
-		panic("Error: Get request!")
-	}
+	PanicIfError(getRequestErr)
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		panic("Error: Response code is not 200!")
+		PanicIfError(errors.New("Response status code not OK"))
 	}
 
-	var raw_json_map interface{}
-	var json_map map[string]interface{}
+	rawJsonData, readJsonDataError := io.ReadAll(resp.Body) 
+	PanicIfError(readJsonDataError);
 
-	// ProcessJsonStruct mm;
+	var rawJsonMap interface{}
 
-	json_processing_err := json.Unmarshal(Reader(resp.Body), &raw_json_map)
-	json_map = raw_json_map.(map[string]interface{})
+	jsonProcessingErr := json.Unmarshal(rawJsonData, &rawJsonMap)
+	PanicIfError(jsonProcessingErr)
 
-	// []interface{} === []ReplayedMarker
-	replayedMarkersList := json_map["items"][0]["mostReplayed"]["markers"].([]interface{}) // <--- array inteface{}
+	jsonMap := rawJsonMap.(map[string]interface{})
 
-	point1, point2 := GetMostReplayedSegment(replayedMarkersList)
+	// type of this variable is []interface{} or implicilty []ReplayedMarker
+	rawReplayedMarkersList := jsonMap["items"].([]interface{})[0].(map[string]interface{})["mostReplayed"].(map[string]interface{})["markers"].([]interface{}) // <---- array of markers
+	
+	// _ = rawReplayedMarkersList
 
+	var markersList []ReplayedMarker = make([]ReplayedMarker, len(rawReplayedMarkersList))
 
+	for i := 0; i < len(rawReplayedMarkersList); i++ {
+		
+		// conversion ReplayedMarker from interface{}
+		rawReplayedMarker := rawReplayedMarkersList[i].(map[string]interface{})
+		
+		markersList[i] = ReplayedMarker{uint64(rawReplayedMarker["startMills"].(int)), rawReplayedMarker["intensityScoreNormalized"].(float32)}
+	} // get list of replayed markers
+
+	// point1, point2 := GetMostReplayedSegment(replayedMarkersList)
 
 	// io.Copy(os.Stdout, resp.Body)
-}
-
-func GetMostReplayedSegment([]ReplayedMarker, duration ulong) (point1 *ReplayedMarker, point2 *ReplayedMarker, err error) {
-	if len(ReplayedMarker) == 0 {
-		return nil, nil, errors.New("Empty list")
-	}
-
-	var mostReplayedValue float = 0
-	var mostReplayedIdx uint = 0
-
-	for i = 0, i < len(ReplayedMarker), ++i {
-		if ReplayedMarker[i].intensityScoreNormalized > mostReplayedValue{
-			mostReplayedValue = ReplayedMarker[i].
-			mostReplayedIdx = i
-		}
-	}
-
-	if mostReplayed[mostReplayedIdx] + duration / 2 > mostReplayed[len(mostReplayed) - 1] ||
-		 mostReplayed[mostReplayedIdx] - duration / 2 < 0 {
-
-		 return nil, nil, errors.New("Too much duration")
-	}
-
-
-	var point1Value ulong = mostReplayed[mostReplayedIdx] - duration / 2;
-	var point2Value ulong = mostReplayed[mostReplayedIdx] + duration / 2;
-
-	// binary search for point1 and point2
 }
 
 func upper_bound(nums []int, value int, comp func(int, int) bool) uint32 {
