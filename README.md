@@ -6,3 +6,6 @@ https://stackoverflow.com/questions/72610552/most-replayed-data-of-youtube-video
 https://github.com/mowshon/moviego - пакет для редактирования видео
 
 https://github.com/vas3k/pepic <----- need check can help
+
+
+https://github.com/PusztaiMate/youtube-clip-maker <------------ must be check, it can be your work
