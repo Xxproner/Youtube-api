@@ -1,0 +1,15 @@
+package main
+
+import (
+	"encoding/base64"
+	"fmt"
+)
+
+func main() {
+	encoded = "CgstMzZ0N3RZR05UMEItCiRVZ2t4R3FVdV9EeFV4RUdxa2p3c3c2VDlYVXhZaTRONVhDWl8QkE4YuJQB"
+	decoded, err := base64.URLEncoding.DecodeString(encoded)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(decoded))
+}
