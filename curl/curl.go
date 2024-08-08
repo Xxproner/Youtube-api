@@ -1,9 +1,14 @@
 package main
 
-import "github.com/subchen/go-curl"
+import (
+	"fmt"
+
+	"github.com/subchen/go-curl"
+)
 
 func main() {
 	var Rq = curl.NewRequest()
-
-	Rq.AddCookie(cookie)
+	Rq.URL = "https://www.youtube.com/youtubei/v1/backstage/create_post?prettyPrint=false"
+	fmt.Println(Rq)
+	//Rq.AddCookie(cookie)
 }

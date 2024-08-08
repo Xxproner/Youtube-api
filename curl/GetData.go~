@@ -7,22 +7,24 @@ import (
 
 type mapC map[string]string
 
-func SplitCookie(m mapC, cookie string) {
-	splitCookie := strings.Split(cookie, " ")
+func SplitCookie(cookie string) (mapC) {
+	m := make(map[string]string
+	splitCookie := strings.Split(cookie, "; ")
 	for i := range splitCookie {
 		keyelem := strings.Split(splitCookie[i], "=")
 		m[keyelem[0]] = keyelem[1]
 	}
+	return m
 
 }
 
-func main() {
+func GetCookie() (mapC) {
 	m := make(map[string]string)
 	cookie := "VISITOR_INFO1_LIVE=DCcZUa687EE; VISITOR_PRIVACY_METADATA=CgJSVRIEGgAgVg^%^3D^%^3D; GPS=1; YSC=clSjNp1q654; HSID=ArPAeDTEX3a4PcxTP; SSID=AcVcySaEcJOxUeZC2; APISID=ZQBsox9eVDJsKE7M/AI2E71tDejLBWwqh1; SAPISID=iU81snPmRiZ4FAX7/AaIUeZc0X5Etk6Dlw; __Secure-1PAPISID=iU81snPmRiZ4FAX7/AaIUeZc0X5Etk6Dlw; __Secure-3PAPISID=iU81snPmRiZ4FAX7/AaIUeZc0X5Etk6Dlw; SID=g.a000mgiQALksn4LxzHcixbJhJybjh_a5K4t2cpnymNdLGdawvtSXBzKMCoiqBSGEkndZmfjUOAACgYKAa4SARASFQHGX2MiyhT3HuM-UeBzp0GM9lUt6RoVAUF8yKoMu4graJHtf0ztFb0JLKVF0076; __Secure-1PSID=g.a000mgiQALksn4LxzHcixbJhJybjh_a5K4t2cpnymNdLGdawvtSXvHYVVMQL6PYQSI7YMY0Y-wACgYKAfgSARASFQHGX2Mip8nDzTpo424dKwOt8GVD6BoVAUF8yKqXvfMEstP4L62j3OwopQFX0076; __Secure-3PSID=g.a000mgiQALksn4LxzHcixbJhJybjh_a5K4t2cpnymNdLGdawvtSX88oSmQ4KOLkZuMgleuS74wACgYKASMSARASFQHGX2MiyX5o8s9TncfDD7PcQPzt_hoVAUF8yKpiupdNIizHYp2wyBLwf3Hl0076; LOGIN_INFO=AFmmF2swRQIgdXY_2rXmXb_bmV-eXmFmu36ufD2OydwOilWm9KnezFgCIQCpXMLlPe9j5rhs-MyaZU8c0-N7lVAD6Y63Y5VPPckDgA:QUQ3MjNmendCcVFONm1JYmhvQ19iLVNNTUJhajV2UTZ6ZlBTRXlFMUFYWm52OHI2UzNjRnBxdzVpTGJ6dUp2MmJfTW96OXFfZmpJSlpPcWQ4WkZkVTV6RUZ3dUpwbkVxNkd1MTN4OFhXZW9rZThqOTBaVTc0X0NDZGFOanoxTVZCTnlzcS0zWjBiVjRIc3VFUHlmeEJaamx1VXFzTHloZkNB; __Secure-1PSIDTS=sidts-CjIB4E2dkXAASmdewvSRpvqI5th4E7qfB6MQ5zf781MW8CamwlTIHhk9R9lfKyT9rMnB8BAA; __Secure-3PSIDTS=sidts-CjIB4E2dkXAASmdewvSRpvqI5th4E7qfB6MQ5zf781MW8CamwlTIHhk9R9lfKyT9rMnB8BAA; SIDCC=AKEyXzUj5b7HefSx4ZYJmB42jjPTV8jDtCq8-lVs_WRDTvEZOZ_vDISFAmK7eIVUPj3cZVhx9g; __Secure-1PSIDCC=AKEyXzWXn3XjrJFJHuUkQkpIiNP7lb3VRtXGLSSt-l5rXQu49gmQKhZEAVXoTJ6B6PjKxR9k; __Secure-3PSIDCC=AKEyXzW0-m4DboKAQunHPzClKkB4Ep-M3ndmEt71GizN7fhFiaJb1RVGIwy9Rn3ygYpBOUGS; ST-19pu767=session_logininfo=AFmmF2swRQIgdXY_2rXmXb_bmV-eXmFmu36ufD2OydwOilWm9KnezFgCIQCpXMLlPe9j5rhs-MyaZU8c0-N7lVAD6Y63Y5VPPckDgA^%^3AQUQ3MjNmendCcVFONm1JYmhvQ19iLVNNTUJhajV2UTZ6ZlBTRXlFMUFYWm52OHI2UzNjRnBxdzVpTGJ6dUp2MmJfTW96OXFfZmpJSlpPcWQ4WkZkVTV6RUZ3dUpwbkVxNkd1MTN4OFhXZW9rZThqOTBaVTc0X0NDZGFOanoxTVZCTnlzcS0zWjBiVjRIc3VFUHlmeEJaamx1VXFzTHloZkNB"
-	SplitCookie(m, cookie)
-	fmt.Println(m)
-	t := make(map[string]string)
-	t["123"] = "321"
-	t["456"] = "123"
-	fmt.Println(t)
+	m = SplitCookie(cookie)
+	return m
+}
+
+func main() {
+	fmt.Println(GetCookie())
 }
