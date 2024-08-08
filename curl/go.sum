@@ -1,0 +1,4 @@
+github.com/subchen/go-curl v0.1.0 h1:2BTAzqo8aPESYX5Wcw1rNZi8vEmo8B4ZUlAWX+WrXis=
+github.com/subchen/go-curl v0.1.0/go.mod h1:HsjRPzHXLhXYbls1t3fWh4meNNS9zYUYoW4xne/sgH0=
+golang.org/x/net v0.28.0 h1:a9JDOJc5GMUJ0+UDqmLT86WiEy7iWyIhz8gz8E4e5hE=
+golang.org/x/net v0.28.0/go.mod h1:yqtgsTWOOnlGLG9GFRrK3++bGOUEkNBoHZc8MEDWPNg=
