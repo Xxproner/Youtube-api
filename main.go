@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"errors"
 	"bytes"
+	"net/url"
+	"time"
 )
 
 // set go json Unmarshal function
@@ -183,10 +185,7 @@ type GoogleClientData struct {
 	}
 }
 
-/**
- * TODO: process errors 
- * */
-func GoogleAuth2_0ScopeYoutubeDataApi_v3(cliend_id string, redirectUrl string) string {
+func ConstructGoogleAuthUri(cliend_id string, redirectUrl string) string {
 
 	// https://accounts.google.com/o/oauth2/v2/auth?
 	var buffer *Buffer = NewBufferString("https://accounts.google.com/o/oauth2/v2/auth?")
@@ -202,10 +201,7 @@ func GoogleAuth2_0ScopeYoutubeDataApi_v3(cliend_id string, redirectUrl string) s
 	return request_uri
 }
 
-
-
-
-
+// ================ FileReader ===========================
 type FileReader struct {
 	file *os.File
 	readedData []bytes
@@ -214,7 +210,7 @@ type FileReader struct {
 func (fileReader FileReader) Read(buffer []bytes) (int, error){
 	var n int64;
 	var read_error error;
-	n, read_error = fileReader.file.ReadFrom(buffer);
+	n, read_error = fileReader.file.Read(buffer);
 	return int(n), read_error
 }
 
@@ -227,39 +223,104 @@ func (fileReader FileReader) OpenFile(string) error {
 func (fileReader FileReader) CloseFile() error {
 	return fileReader.file.Close()
 }
+// ================ ~FileReader ==========================
 
-type ParserGoogleAuth2_0Token struct {
-	buffer bytes.Buffer
+
+// ================ ServerOnRedirectUri ============
+type ServerOnRedirectUri struct {
+	code chan string
 	ServeHTTP(ResponseWriter, *Request)
 }
 
-func (parser ParserGoogleAuth2_0Token) (repWriter ResponseWriter, req *Request) {
-	
+func (parser ServerOnRedirectUri) ServeHTTP (repWriter ResponseWriter, req *Request) {
+	queryParams, parseUriError := parseQuery(req.RawQuery())
+	if !values.Has("code") {
+		parser.code <- "" // empty string
+	} else {
+		parser.code <- queryParams.Get("code")
+	}
+
+	WriteHeader(http.StatusNotFound) // all
+}
+// ================ ~ServerOnRedirectUri ===========
+
+type Tokenizer struct {
+	Access_token string
+	Expires_in float64
+	Refresh_token string
+	Scope string
+	Token_type string
+	createdTime time.Time
+}
+// POST /token HTTP/1.1
+// Host: oauth2.googleapis.com
+// Content-Type: application/x-www-form-urlencoded
+func GetGoogleTokens(url, cliend_id, secret_id, redirectUri, code string) (string, string, error) {
+	resp, some_error := http.PostForm(url, (
+		{"code", code}			, {"client_id", cliend_id}, 
+		{"secret_id", secret_id}, {"redirectUri", redirectUri}, 
+		{"grant_type", "authorization_code"}
+	))
+
+	if some_error != nil {
+		return "", "", some_error
+	}
+	defer resp.Body.Close()
+
+	var tokenizer Tokenizer;
+	rawJsonData, readJsonDataError := resp.Body.ReadAll()
+	if readJsonDataError != nil {
+		return "", "", readJsonDataError
+	}
+
+	processingJsonError := json.Unmarshal(rawJsonData, &tokenizer)
+	if processingJsonError != nil {
+		return "", "", processingJsonError
+	}
+
+	return tokenizer.Access_token, tokenizer.Refresh_token, nil
 }
 
 func main() {
 
+// configuration web app. Panic leads program termination
+	var serverOnRedirectUri ServerOnRedirectUri;
+	codeChan = make(chan string)
+	serverOnRedirectUri.code = codeChan
+	// PanicIfError(http.ListenAndServeTLS(":8000", "cert.txt", "key.txt", serverOnRedirectUri)) // create cert and private key
+	go http.ListenAndServer(":8000", serverOnRedirectUri) // blocks main flow
+
 	var pathToClientSecret string = "client_secret.json"
 	var googleClientDataFile FileReader;
-	PanicIfError(google_client_data.Open(pathToClientSecret))
+
+	PanicIfError(google_client_data.OpenFile(pathToClientSecret))
 	defer googleClientDataFile.CloseFile()
 
 	var decoderGoogleClientData *json.Decoder = json.NewDecoder(googleClientDataFile)
 	var googleClientData GoogleClientData;
 	PanicIfError(decoderGoogleClientData.Decode(&googleClientData))
 
-	// https proto
-	var requestUriAuth2_0 string = GoogleAuth2_0ScopeYoutubeDataApi_v3(googleClietnData.Web.Client_id, googleClientData.Web.Redirect_uris[0])
+	// http proto -> production needs https
+	var requestUriAuth2_0 string = ConstructGoogleAuthUri(googleClientData.Web.Client_id, googleClientData.Web.Redirect_uris[1])
 
-	var googlTokenAauth_2_0 ParserGoogleAuth2_0Token;
-	// PanicIfError(http.ListenAndServeTLS(":8000", "cert.txt", "key.txt", googleTokenAuth_2_0)) // create cert and private key
-	PanicIfError(http.ListenAndServer(":8000", googleTokenAuth_2_0))
-
+	// redirecting to google oauth 2.0
 	if error := OpenBrowser(requestUriAuth2_0); error != nil {
 		panic(error)
 	}
-	// wait answer from console google
 
+// start main program flow
+
+	// wait response from google console
+	var code string = <- codeChan
+	tokenAccess, tokenRefresh, oAuth2Error := GetGoogleTokens("https://oauth2.googleapis.com/token", googleClientData.Web.cliend_id, 
+		googleClientData.Web.secret_id, code, googleClientData.Web.redirect_uris[1])
+
+	PanicIfError(oAuth2Error)
+
+	// send raw data
+
+	// stop server
+	// send response to 
 	// const youtubeDataApi3Url string = "https://yt.lemnoslife.com/videos?part=mostReplayed&id="
 
 	// var targetVideoId string = GetYoutubeVideoId()
